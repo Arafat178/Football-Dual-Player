@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dual Player Football</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="lobby">
+        <h1>Mini Football - Dual Player</h1>
+        <div id="join-section">
+            <input type="text" id="player-name-input" placeholder="Enter Your Name">
+            <input type="text" id="room-id-input" placeholder="Create or Enter Game ID">
+        </div>
+        <button id="create-game-btn">Create Game</button>
+        <button id="join-game-btn">Join Game</button>
+    </div>
+
+    <div id="game-content" class="hidden">
+        <div id="status-bar">
+            <div id="score-board">
+                <span id="player1-name">Player 1</span>: <span id="player1-score">0</span> | 
+                <span id="player2-name">Player 2</span>: <span id="player2-score">0</span>
+            </div>
+            <div id="timer">5:00</div>
+        </div>
+        <div id="game-container">
+            <div id="game-board">
+                <div id="center-line"></div>
+                <div id="center-circle"></div>
+                <div class="penalty-area" id="player2-penalty-area"></div>
+                <div class="penalty-area" id="player1-penalty-area"></div>
+
+                <div id="goal-text">GOAL!</div>
+                <div id="fireworks-container"></div>
+
+                <div id="game-over-overlay">
+                    <div id="game-over-message"></div>
+                    <button id="play-again-btn">Back to Lobby</button>
+                    <div id="leaderboard">
+                        <h2>Recent Games</h2>
+                        <ul id="leaderboard-list"></ul>
+                    </div>
+                </div>
+                
+                <div class="goal" id="player2-goal"></div>
+                <div id="player2" class="player"></div>
+                <div id="ball"></div>
+                <div id="player1" class="player"></div>
+                <div class="goal" id="player1-goal"></div>
+            </div>
+            <div id="controls">
+                <div class="move-controls">
+                    <button id="move-left">◄</button>
+                    <button id="move-right">►</button>
+                </div>
+                <button id="kick">Kick</button>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="kick-sound" src="kickSound.mp3" preload="auto"></audio>
+    <audio id="goal-sound" src="goalSound.mp3" preload="auto"></audio>
+    <audio id="background-music" src="backSound.mp3" loop preload="auto"></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
