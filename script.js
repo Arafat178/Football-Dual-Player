@@ -37,11 +37,11 @@ const moveRightBtn = document.getElementById('move-right');
 const kickBtn = document.getElementById('kick');
 const kickSound = document.getElementById('kick-sound');
 const goalSound = document.getElementById('goal-sound');
-const fireworksContainer = document.getElementById('fireworks-container'); // ADDED
+const fireworksContainer = document.getElementById('fireworks-container');
 const backgroundMusic = document.getElementById('background-music');
 
 
-// --- গেম ভ্যারিয়েবল ---
+// --- গেম ভ্যারিয়েবল ---
 let gameRoomId;
 let localPlayerId;
 let gameRef;
@@ -83,7 +83,7 @@ createGameBtn.addEventListener('click', () => {
 joinGameBtn.addEventListener('click', () => {
     const playerName = playerNameInput.value.trim();
     gameRoomId = roomIdInput.value.trim().toLowerCase();
-    
+
     if (!playerName) return alert("Please enter your name.");
     if (!gameRoomId) return alert("Please enter a Game ID.");
 
@@ -100,7 +100,7 @@ joinGameBtn.addEventListener('click', () => {
                 listenToGameUpdates();
             });
         } else if (gameState) {
-             alert("This game has already started or ended.");
+            alert("This game has already started or ended.");
         } else {
             alert("Game ID not found!");
         }
@@ -112,17 +112,14 @@ function listenToGameUpdates() {
     gameContent.classList.remove('hidden');
     backgroundMusic.volume = 0.3;
 
-    // ADDED: Start background music
     backgroundMusic.play().catch(error => {
-        // This catch block handles cases where the browser blocks autoplay
-        console.log("Background music couldn't play automatically. A user interaction might be needed.", error);
+        console.log("Background music couldn't play automatically.", error);
     });
 
     gameRef.on('value', (snapshot) => {
         const gameState = snapshot.val();
         if (!gameState) return;
 
-        // ... (rest of the function is the same)
         const oldScore = (window.localGameState && window.localGameState.score) || { player1: 0, player2: 0 };
         window.localGameState = gameState;
 
@@ -130,7 +127,7 @@ function listenToGameUpdates() {
         player2Elem.style.left = gameState.player2.x + 'px';
         ballElem.style.left = gameState.ball.x + 'px';
         ballElem.style.top = gameState.ball.y + 'px';
-        
+
         if (gameState.score.player1 > oldScore.player1 || gameState.score.player2 > oldScore.player2) {
             showGoalAnimation();
         }
@@ -156,10 +153,10 @@ function listenToGameUpdates() {
     }
 }
 
-// --- প্লেয়ার কন্ট্রোল (সংকেত পাঠানো) ---
-function sendMoveIntent(direction) { if(gameRef) gameRef.child(localPlayerId).child('move').set(direction); }
-function stopMoveIntent() { if(gameRef) gameRef.child(localPlayerId).child('move').set('none'); }
-function sendKickIntent() { if(gameRef) gameRef.child(localPlayerId).child('kick').set(true); }
+// --- প্লেয়ার কন্ট্রোল (সংকেত পাঠানো) ---
+function sendMoveIntent(direction) { if (gameRef) gameRef.child(localPlayerId).child('move').set(direction); }
+function stopMoveIntent() { if (gameRef) gameRef.child(localPlayerId).child('move').set('none'); }
+function sendKickIntent() { if (gameRef) gameRef.child(localPlayerId).child('kick').set(true); }
 
 ['mousedown', 'touchstart'].forEach(evt => {
     moveLeftBtn.addEventListener(evt, (e) => { e.preventDefault(); sendMoveIntent('left'); });
@@ -168,46 +165,77 @@ function sendKickIntent() { if(gameRef) gameRef.child(localPlayerId).child('kick
 });
 ['mouseup', 'touchend', 'mouseleave'].forEach(evt => { document.addEventListener(evt, stopMoveIntent); });
 
-// --- গেম ফিজিক্স এবং লুপ (শুধুমাত্র হোস্টের জন্য) ---
+
+// --- গেম ফিজিক্স এবং লুপ (শুধুমাত্র হোস্টের জন্য) [FIXED CODE] ---
 function gameLoop() {
-    if (!hostPlayer) return;
-    
-    gameRef.transaction((gameState) => {
+    if (!hostPlayer) {
+        cancelAnimationFrame(animationFrameId);
+        return;
+    }
+
+    gameRef.once('value', (snapshot) => {
+        const gameState = snapshot.val();
         if (gameState && gameState.status === 'playing') {
-            if (gameState.player1.move === 'left' && gameState.player1.x > 0) gameState.player1.x -= 5;
-            if (gameState.player1.move === 'right' && gameState.player1.x < 250) gameState.player1.x += 5;
-            if (gameState.player2.move === 'left' && gameState.player2.x > 0) gameState.player2.x -= 5;
-            if (gameState.player2.move === 'right' && gameState.player2.x < 250) gameState.player2.x += 5;
-            
-            if (gameState.player1.kick) handleKickPhysics(gameState.player1, gameState.ball, 'player1');
-            if (gameState.player2.kick) handleKickPhysics(gameState.player2, gameState.ball, 'player2');
-            gameState.player1.kick = false;
-            gameState.player2.kick = false;
-            
-            gameState.ball.x += gameState.ball.speedX;
-            gameState.ball.y += gameState.ball.speedY;
-            gameState.ball.speedX *= 0.99;
-            gameState.ball.speedY *= 0.99;
-            if (gameState.ball.x <= 0 || gameState.ball.x >= 282) gameState.ball.speedX *= -1;
-            
-            let scorer = null;
-            if (gameState.ball.y <= 0) { scorer = 'player1'; } 
-            else if (gameState.ball.y >= 482) { scorer = 'player2'; }
-            if (scorer) {
-                gameState.score[scorer]++;
-                resetBall(scorer, gameState.ball);
-            }
-            
-            const now = Date.now();
-            if (now - lastTimeUpdate > 1000) {
-                gameState.time = Math.max(0, gameState.time - 1);
-                lastTimeUpdate = now;
-            }
+            updateGameState(gameState);
         }
-        return gameState;
     });
 
     animationFrameId = requestAnimationFrame(gameLoop);
+}
+
+function updateGameState(gameState) {
+    // প্লেয়ার মুভমেন্ট
+    if (gameState.player1.move === 'left' && gameState.player1.x > 0) gameState.player1.x -= 5;
+    if (gameState.player1.move === 'right' && gameState.player1.x < 250) gameState.player1.x += 5;
+    if (gameState.player2.move === 'left' && gameState.player2.x > 0) gameState.player2.x -= 5;
+    if (gameState.player2.move === 'right' && gameState.player2.x < 250) gameState.player2.x += 5;
+
+    const updates = {};
+
+    if (gameState.player1.kick) {
+        handleKickPhysics(gameState.player1, gameState.ball, 'player1');
+        updates['player1/kick'] = false;
+    }
+    if (gameState.player2.kick) {
+        handleKickPhysics(gameState.player2, gameState.ball, 'player2');
+        updates['player2/kick'] = false;
+    }
+
+    // বলের ফিজিক্স
+    gameState.ball.x += gameState.ball.speedX;
+    gameState.ball.y += gameState.ball.speedY;
+    gameState.ball.speedX *= 0.99;
+    gameState.ball.speedY *= 0.99;
+
+    if (gameState.ball.x <= 0 || gameState.ball.x >= 282) {
+        gameState.ball.speedX *= -1;
+    }
+
+    // গোল চেক
+    let scorer = null;
+    if (gameState.ball.y <= 0) { scorer = 'player1'; }
+    else if (gameState.ball.y >= 482) { scorer = 'player2'; }
+
+    if (scorer) {
+        gameState.score[scorer]++;
+        resetBall(scorer, gameState.ball);
+    }
+
+    // টাইমার আপডেট
+    const now = Date.now();
+    if (now - lastTimeUpdate > 1000) {
+        gameState.time = Math.max(0, gameState.time - 1);
+        lastTimeUpdate = now;
+    }
+
+    // সব পরিবর্তনের তথ্য একসাথে ডেটাবেসে পাঠানো হচ্ছে
+    updates['player1/x'] = gameState.player1.x;
+    updates['player2/x'] = gameState.player2.x;
+    updates['ball'] = gameState.ball;
+    updates['score'] = gameState.score;
+    updates['time'] = gameState.time;
+
+    gameRef.update(updates);
 }
 
 function handleKickPhysics(playerState, ballState, playerId) {
@@ -262,23 +290,22 @@ function showGoalAnimation() {
     goalSound.play();
     goalText.style.display = 'block';
     createFireworks();
-    setTimeout(() => { 
-        goalText.style.display = 'none'; 
+    setTimeout(() => {
+        goalText.style.display = 'none';
         fireworksContainer.innerHTML = '';
     }, 2000);
 }
 
-// --- CHANGED: Updated endGame function ---
 function endGame(gameState) {
     cancelAnimationFrame(animationFrameId);
-    backgroundMusic.pause(); // Stop the background music
-    backgroundMusic.currentTime = 0; // Optional: Reset music to the start
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
 
     if (hostPlayer) {
         gameRef.child('status').set('ended');
         saveGameResult(gameState);
     }
-    
+
     const p1Name = gameState.player1.name || 'Player 1';
     const p2Name = gameState.player2.name || 'Player 2';
 
@@ -289,32 +316,29 @@ function endGame(gameState) {
     } else {
         gameOverMessage.innerText = "It's a Draw!";
     }
-    
+
     gameOverOverlay.style.display = 'flex';
     showLeaderboard();
     hostPlayer = false;
 }
 
-// --- ADDED: New function to save game result ---
 function saveGameResult(gameState) {
     const gameResult = {
         p1Name: gameState.player1.name || 'Player 1',
         p1Score: gameState.score.player1,
         p2Name: gameState.player2.name || 'Player 2',
         p2Score: gameState.score.player2,
-        timestamp: firebase.database.ServerValue.TIMESTAMP // For sorting
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     };
     database.ref('gameHistory').push(gameResult);
 }
 
-// --- ADDED: New function to show leaderboard ---
 function showLeaderboard() {
     const leaderboardList = document.getElementById('leaderboard-list');
     const historyRef = database.ref('gameHistory');
 
-    // Fetch the last 5 game results, ordered by time
     historyRef.orderByChild('timestamp').limitToLast(5).once('value', (snapshot) => {
-        leaderboardList.innerHTML = ''; // Clear previous list
+        leaderboardList.innerHTML = '';
         if (!snapshot.exists()) {
             leaderboardList.innerHTML = '<li>No games played yet.</li>';
             return;
@@ -325,7 +349,6 @@ function showLeaderboard() {
             games.push(childSnapshot.val());
         });
 
-        // Reverse to show the most recent game first
         games.reverse().forEach(game => {
             const listItem = document.createElement('li');
             listItem.textContent = `${game.p1Name} ${game.p1Score} - ${game.p2Score} ${game.p2Name}`;
