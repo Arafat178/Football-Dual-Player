@@ -204,8 +204,8 @@ function updateGameState(gameState) {
     // বলের ফিজিক্স
     gameState.ball.x += gameState.ball.speedX;
     gameState.ball.y += gameState.ball.speedY;
-    gameState.ball.speedX *= 0.99;
-    gameState.ball.speedY *= 0.99;
+    gameState.ball.speedX *= 0.995;
+    gameState.ball.speedY *= 0.995;
 
     if (gameState.ball.x <= 0 || gameState.ball.x >= 282) {
         gameState.ball.speedX *= -1;
@@ -249,7 +249,7 @@ function handleKickPhysics(playerState, ballState, playerId) {
 
     if (distance < 40) {
         let kickDirectionY = playerId === 'player1' ? -1 : 1;
-        ballState.speedY = 10 * kickDirectionY;
+        ballState.speedY = 8 * kickDirectionY;
         ballState.speedX = (ballCenterX - playerCenterX) / 3;
     }
 }
@@ -358,3 +358,4 @@ function showLeaderboard() {
 }
 
 playAgainBtn.addEventListener('click', () => { window.location.reload(); });
+
