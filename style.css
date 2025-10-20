@@ -1,143 +1,144 @@
-/* --- বেসিক স্টাইল এবং নতুন ভ্যারিয়েবল --- */
-:root {
-    --player1-color: #2c3e50;  /* Navy Blue */
-    --player2-color: #e74c3c;  /* Coral Red */
-    --grass-light: #8bc34a;
-    --grass-dark: #7cb342;
-    --line-color: rgba(255, 255, 255, 0.7);
-    --ui-bg: rgba(40, 40, 40, 0.5); /* Semi-transparent UI background */
-}
-
 body {
-    font-family: 'Poppins', sans-serif; /* NEW: সুন্দর ফন্ট ব্যবহার */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: lightblue; /* Changed body background */
-    margin: 0;
-    padding: 10px 0;
-    box-sizing: border-box;
-    touch-action: none;
-    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #0B132B, #1D3557, #457B9D);
+    margin: 0;
+    padding: 10px 0;
+    box-sizing: border-box;
+    touch-action: none;
+    color: white;
 }
 
-.hidden { display: none !important; }
-
-/* --- লবি স্টাইল (সামান্য পরিবর্তন) --- */
+/* --- লবি স্টাইল --- */
 #lobby { text-align: center; }
 #lobby h1 { margin-bottom: 20px; }
-#lobby input { padding: 12px; font-size: 16px; width: 250px; margin-bottom: 15px; border-radius: 8px; border: none; text-align: center; }
-#lobby button { padding: 12px 25px; font-size: 18px; margin: 5px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; transition: transform 0.2s; }
-#lobby button:hover { transform: scale(1.05); }
-#create-game-btn { background-color: #27ae60; color: white; }
-#join-game-btn { background-color: #2980b9; color: white; }
+#lobby input { padding: 12px; font-size: 16px; width: 250px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
+#lobby button { padding: 12px 25px; font-size: 18px; margin: 5px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; }
+#create-game-btn { background-color: #4CAF50; color: white; }
+#join-game-btn { background-color: #008CBA; color: white; }
+.hidden { display: none !important; }
 
-/* --- গেমের উপরের অংশ (নতুন ডিজাইন) --- */
-#status-bar {
-    display: flex;
-    justify-content: space-between;
-    width: 300px;
-    margin-bottom: 10px;
-    font-size: 22px;
-    background-color: var(--ui-bg); /* NEW */
-    padding: 8px 15px; /* NEW */
-    border-radius: 10px; /* NEW */
-    box-sizing: border-box;
-    font-weight: bold;
-}
+/* --- গেমের উপরের অংশ --- */
+#status-bar { display: flex; justify-content: space-between; width: 300px; margin-bottom: 5px; font-size: 20px; }
+#timer { font-weight: bold; }
 
-/* --- গেম বোর্ড এবং মাঠের ডিজাইন --- */
-#game-container {
-    border-radius: 10px; /* NEW: Rounded corners for container */
-    overflow: hidden; /* Important for border-radius */
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    margin-top: 5px;
-}
+/* --- গেম বোর্ড এবং কন্টেইনার --- */
+#game-container { border: 2px solid #333; box-shadow: 0 0 15px rgba(0,0,0,0.5); margin-top: 5px; }
 #game-board {
-    width: 300px;
-    height: 500px;
-    border: 3px solid white;
-    position: relative;
-    overflow: hidden;
-    background-image: repeating-linear-gradient(
-        to bottom,
-        var(--grass-dark) 0%, var(--grass-dark) 10%,
-        var(--grass-light) 10%, var(--grass-light) 20%
-    );
-    background-size: 100% 100px;
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.3); /* NEW: Inner shadow for depth */
+    width: 300px;
+    height: 500px;
+    background-color: #4CAF50; /* Fallback color */
+    border: 3px solid white;
+    position: relative;
+    overflow: hidden;
+    /* --- Changed: Realistic grass stripes --- */
+    background-image: repeating-linear-gradient(
+        to bottom,
+        #5cb85c 0%, #5cb85c 10%,
+        #66c766 10%, #66c766 20%
+    );
+    background-size: 100% 100px; /* Controls the height of the stripes */
 }
 
-/* মাঠের দাগ */
-#center-line, #center-circle, .penalty-area { border-color: var(--line-color); }
-#center-line { height: 2px; }
-#center-circle, .penalty-area { border-width: 2px; }
+/* --- New: Field Markings --- */
+#center-line {
+    position: absolute;
+    top: 50%; /* লাইনটিকে মাঝখানে আনে */
+    left: 0;
+    transform: translateY(-50%); /* একদম সঠিক মাঝখানে আনে */
+    width: 100%; /* লাইনটিকে পুরো চওড়া করে */
+    height: 3px; /* লাইনটির পুরুত্ব */
+    background-color: rgba(255, 255, 255, 0.6);
+}
 
-/* (বাকি দাগের কোড আগের মতোই থাকবে...) */
-#center-line { position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 100%; }
-#center-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; border-radius: 50%; box-sizing: border-box; }
-.penalty-area { position: absolute; left: 50%; transform: translateX(-50%); width: 150px; height: 70px; box-sizing: border-box; }
-#player2-penalty-area { top: -2px; border-top: none; border-radius: 0 0 15px 15px; }
-#player1-penalty-area { bottom: -2px; border-bottom: none; border-radius: 15px 15px 0 0; }
+#center-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    box-sizing: border-box;
+}
 
-/* --- প্লেয়ার এবং বলের নতুন ডিজাইন --- */
+.penalty-area {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 70px;
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    box-sizing: border-box;
+}
+
+#player2-penalty-area {
+    top: -3px; /* Align with top border */
+    border-top: none;
+    border-radius: 0 0 15px 15px;
+}
+
+#player1-penalty-area {
+    bottom: -3px; /* Align with bottom border */
+    border-bottom: none;
+    border-radius: 15px 15px 0 0;
+}
+
+
+/* --- প্লেয়ার এবং বলের স্টাইল --- */
 .player {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 10;
-    border: 2px solid white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* NEW: উন্নত শ্যাডো */
-    transition: transform 0.1s ease-out;
+    width: 50px;
+    height: 25px;
+    border-radius: 25px 25px 0 0;
+    position: absolute;
+    z-index: 10;
+    border: 2px solid white;
 }
-#player1 { background: var(--player1-color); bottom: 15px; }
-#player2 { background: var(--player2-color); top: 15px; }
+
+#player1 {
+    background-color: #007BFF;
+    bottom: 10px;
+}
+
+#player2 {
+    background-color: #DC3545;
+    top: 10px;
+    transform: rotate(180deg);
+}
+
 #ball {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 10;
-    background: radial-gradient(circle at 6px 6px, #ffffff, #f0f0f0); /* NEW: Gradient for 3D effect */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* NEW */
+    width: 18px;
+    height: 18px;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 10;
 }
 
-/* --- কন্ট্রোল বাটন (নতুন ডিজাইন) --- */
-#controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    background-color: transparent; /* Changed */
-    width: 300px;
-    box-sizing: border-box;
-    margin-top: 10px;
-}
-#controls button {
-    width: 80px;
-    height: 80px;
-    font-size: 40px;
-    cursor: pointer;
-    border: none;
-    border-radius: 50%;
-    background-color: var(--ui-bg);
-    color: white;
-    -webkit-tap-highlight-color: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.2s, transform 0.2s; /* NEW: মসৃণ অ্যানিমেশন */
-}
-#controls button:active {
-    background-color: rgba(90, 90, 90, 0.7);
-    transform: scale(0.95); /* NEW: Pressed effect */
-}
-#move-left::before { content: '◄'; }
-#move-right::before { content: '►'; }
+/* --- গোল এবং অন্যান্য UI এলিমেন্ট --- */
+.goal { width: 100%; height: 6px; background-color: white; position: absolute; left: 0; z-index: 5; }
+#player2-goal { top: 0; }
+#player1-goal { bottom: 0; }
 
+#goal-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; font-weight: bold; color: yellow; text-shadow: 3px 3px 5px black; z-index: 20; display: none; animation: goal-animation 0.5s ease-out; }
+@keyframes goal-animation { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+#game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 30; text-align: center; }
+#game-over-message { font-size: 48px; font-weight: bold; text-shadow: 3px 3px 6px black; }
+#play-again-btn { margin-top: 20px; padding: 15px 30px; font-size: 22px; cursor: pointer; border: none; border-radius: 10px; background-color: #ff9800; color: white; font-weight: bold; }
+
+/* --- কন্ট্রোল বাটন --- */
+#controls { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background-color: #333; width: 300px; box-sizing: border-box; }
+.move-controls { display: flex; gap: 15px; }
+#controls button { padding: 15px 25px; font-size: 24px; cursor: pointer; border: none; border-radius: 8px; background-color: #555; color: white; -webkit-tap-highlight-color: transparent; }
+#kick { padding: 15px 40px; }
+#controls button:active { background-color: #777; }
 /* বাম দিকের বাটনের অবস্থান */
 #move-left {
     left: 25px; /* বাম দিক থেকে ২৫ পিক্সেল দূরে */
@@ -148,21 +149,79 @@ body {
     right: 25px; /* ডান দিক থেকে ২৫ পিক্সেল দূরে */
 }
 
-/* (বাকি সব UI এলিমেন্টের কোড অপরিবর্তিত থাকবে) */
+/* ADD THIS TO THE END OF YOUR CSS FILE */
+
+#leaderboard {
+    margin-top: 25px;
+    width: 90%;
+    max-width: 280px;
+}
+
+#leaderboard h2 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    color: #ffc107; /* A nice gold color */
+}
+
+#leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    text-align: center;
+    color: #f0f0f0;
+}
+
+#leaderboard-list li {
+    padding: 5px;
+    border-bottom: 1px solid #555;
+}
+
+#leaderboard-list li:last-child {
+    border-bottom: none;
+}
+
+/* --- गोल এবং অন্যান্য UI এলিমেন্ট --- */
 .goal { width: 100%; height: 6px; background-color: white; position: absolute; left: 0; z-index: 5; }
 #player2-goal { top: 0; }
 #player1-goal { bottom: 0; }
+
 #goal-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; font-weight: bold; color: yellow; text-shadow: 3px 3px 5px black; z-index: 20; display: none; animation: goal-animation 0.5s ease-out; }
 @keyframes goal-animation { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-#fireworks-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 19; }
-.particle { position: absolute; width: 6px; height: 6px; border-radius: 50%; animation: explode 1s ease-out forwards; }
-@keyframes explode { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--tx), var(--ty)); opacity: 0; } }
-#game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 30; text-align: center; }
-#game-over-message { font-size: 48px; font-weight: bold; text-shadow: 3px 3px 6px black; }
-#play-again-btn { margin-top: 20px; padding: 15px 30px; font-size: 22px; cursor: pointer; border: none; border-radius: 10px; background-color: #ff9800; color: white; font-weight: bold; }
-#leaderboard { margin-top: 25px; width: 90%; max-width: 280px; }
-#leaderboard h2 { margin: 0 0 10px 0; font-size: 24px; color: #ffc107; }
-#leaderboard-list { list-style: none; padding: 0; margin: 0; font-size: 18px; text-align: center; color: #f0f0f0; }
-#leaderboard-list li { padding: 5px; border-bottom: 1px solid #555; }
-#leaderboard-list li:last-child { border-bottom: none; }
 
+/* ADDED: Fireworks Styles */
+#fireworks-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 19; /* Just behind the goal text */
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    /* The animation will move the particle from the center outwards */
+    animation: explode 1s ease-out forwards;
+}
+
+@keyframes explode {
+    from {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    to {
+        /* --tx and --ty will be set by JavaScript */
+        transform: translate(var(--tx), var(--ty));
+        opacity: 0;
+    }
+}
+/* End of Fireworks Styles */
+
+#game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 30; text-align: center; }
+#game-over-message { font-size: 48px; font-weight: bold; text-shadow: 3px 3px 6px black; }
+#play-again-btn { margin-top: 20px; padding: 15px 30px; font-size: 22px; cursor: pointer; border: none; border-radius: 10px; background-color: #ff9800; color: white; font-weight: bold; is it ok? }
