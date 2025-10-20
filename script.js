@@ -34,7 +34,7 @@ const gameOverMessage = document.getElementById('game-over-message');
 const playAgainBtn = document.getElementById('play-again-btn');
 const moveLeftBtn = document.getElementById('move-left');
 const moveRightBtn = document.getElementById('move-right');
-const kickBtn = document.getElementById('kick');
+// const kickBtn = document.getElementById('kick'); // Kick button is removed
 const kickSound = document.getElementById('kick-sound');
 const goalSound = document.getElementById('goal-sound');
 const fireworksContainer = document.getElementById('fireworks-container');
@@ -65,9 +65,10 @@ createGameBtn.addEventListener('click', () => {
         if (snapshot.exists()) {
             alert("This Game ID is already taken. Please try a different one.");
         } else {
+            // Player state no longer needs a 'kick' property
             const initialGameState = {
-                player1: { x: 125, move: 'none', kick: false, name: playerName },
-                player2: { x: 125, move: 'none', kick: false, name: 'Waiting...' },
+                player1: { x: 125, move: 'none', name: playerName },
+                player2: { x: 125, move: 'none', name: 'Waiting...' },
                 ball: { x: 141, y: 445, speedX: 0, speedY: 0 },
                 score: { player1: 0, player2: 0 },
                 time: 180, //game time setup
@@ -84,8 +85,8 @@ joinGameBtn.addEventListener('click', () => {
     const playerName = playerNameInput.value.trim();
     gameRoomId = roomIdInput.value.trim().toLowerCase();
 
+    if (!playerName) return alert("Please enter a Game ID.");
     if (!playerName) return alert("Please enter your name.");
-    if (!gameRoomId) return alert("Please enter a Game ID.");
 
     gameRef = database.ref('rooms/' + gameRoomId);
     localPlayerId = 'player2';
@@ -156,17 +157,17 @@ function listenToGameUpdates() {
 // --- প্লেয়ার কন্ট্রোল (সংকেত পাঠানো) ---
 function sendMoveIntent(direction) { if (gameRef) gameRef.child(localPlayerId).child('move').set(direction); }
 function stopMoveIntent() { if (gameRef) gameRef.child(localPlayerId).child('move').set('none'); }
-function sendKickIntent() { if (gameRef) gameRef.child(localPlayerId).child('kick').set(true); }
+// sendKickIntent is no longer needed
 
 ['mousedown', 'touchstart'].forEach(evt => {
     moveLeftBtn.addEventListener(evt, (e) => { e.preventDefault(); sendMoveIntent('left'); });
     moveRightBtn.addEventListener(evt, (e) => { e.preventDefault(); sendMoveIntent('right'); });
-    kickBtn.addEventListener(evt, (e) => { e.preventDefault(); sendKickIntent(); });
+    // kickBtn listener is removed
 });
 ['mouseup', 'touchend', 'mouseleave'].forEach(evt => { document.addEventListener(evt, stopMoveIntent); });
 
 
-// --- গেম ফিজিক্স এবং লুপ (শুধুমাত্র হোস্টের জন্য) [FIXED CODE] ---
+// --- গেম ফিজিক্স এবং লুপ (শুধুমাত্র হোস্টের জন্য) [CHANGED CODE] ---
 function gameLoop() {
     if (!hostPlayer) {
         cancelAnimationFrame(animationFrameId);
@@ -184,22 +185,15 @@ function gameLoop() {
 }
 
 function updateGameState(gameState) {
-    // প্লেয়ার মুভমেন্ট
+    // প্লেয়ার মুভমেন্ট
     if (gameState.player1.move === 'left' && gameState.player1.x > 0) gameState.player1.x -= 5;
     if (gameState.player1.move === 'right' && gameState.player1.x < 250) gameState.player1.x += 5;
     if (gameState.player2.move === 'left' && gameState.player2.x > 0) gameState.player2.x -= 5;
     if (gameState.player2.move === 'right' && gameState.player2.x < 250) gameState.player2.x += 5;
 
-    const updates = {};
-
-    if (gameState.player1.kick) {
-        handleKickPhysics(gameState.player1, gameState.ball, 'player1');
-        updates['player1/kick'] = false;
-    }
-    if (gameState.player2.kick) {
-        handleKickPhysics(gameState.player2, gameState.ball, 'player2');
-        updates['player2/kick'] = false;
-    }
+    // *** NEW: Automatic Kick Logic (Collision Detection) ***
+    handleAutomaticKick(gameState.player1, gameState.ball, 'player1');
+    handleAutomaticKick(gameState.player2, gameState.ball, 'player2');
 
     // বলের ফিজিক্স
     gameState.ball.x += gameState.ball.speedX;
@@ -211,10 +205,10 @@ function updateGameState(gameState) {
         gameState.ball.speedX *= -1;
     }
 
-    // গোল চেক
+    // গোল চেক (This logic now correctly handles a "miss")
     let scorer = null;
-    if (gameState.ball.y <= 0) { scorer = 'player1'; }
-    else if (gameState.ball.y >= 482) { scorer = 'player2'; }
+    if (gameState.ball.y <= 0) { scorer = 'player1'; } // Player 1 scores in Player 2's goal
+    else if (gameState.ball.y >= 482) { scorer = 'player2'; } // Player 2 scores in Player 1's goal
 
     if (scorer) {
         gameState.score[scorer]++;
@@ -229,38 +223,43 @@ function updateGameState(gameState) {
     }
 
     // সব পরিবর্তনের তথ্য একসাথে ডেটাবেসে পাঠানো হচ্ছে
-    updates['player1/x'] = gameState.player1.x;
-    updates['player2/x'] = gameState.player2.x;
-    updates['ball'] = gameState.ball;
-    updates['score'] = gameState.score;
-    updates['time'] = gameState.time;
+    const updates = {
+        'player1/x': gameState.player1.x,
+        'player2/x': gameState.player2.x,
+        'ball': gameState.ball,
+        'score': gameState.score,
+        'time': gameState.time
+    };
 
     gameRef.update(updates);
 }
 
-function handleKickPhysics(playerState, ballState, playerId) {
-    kickSound.play();
+// *** RENAMED and REPURPOSED function for automatic kicks ***
+function handleAutomaticKick(playerState, ballState, playerId) {
     const playerY = playerId === 'player1' ? 465 : 10;
-    const playerCenterX = playerState.x + 25;
-    const playerCenterY = playerY + 12.5;
-    const ballCenterX = ballState.x + 9;
+    const playerCenterX = playerState.x + 25; // Player width is 50px
+    const playerCenterY = playerY + 12.5;    // Player height is 25px
+    const ballCenterX = ballState.x + 9;     // Ball width/height is 18px
     const ballCenterY = ballState.y + 9;
+
     const distance = Math.sqrt(Math.pow(playerCenterX - ballCenterX, 2) + Math.pow(playerCenterY - ballCenterY, 2));
 
-    if (distance < 40) {
-        let kickDirectionY = playerId === 'player1' ? -1 : 1;
+    // If ball is close enough to the player, kick it
+    if (distance < 40) { // 40px is the kick radius
+        kickSound.play();
+        let kickDirectionY = playerId === 'player1' ? -1 : 1; // Kick away from the player
         ballState.speedY = 8 * kickDirectionY;
-        ballState.speedX = (ballCenterX - playerCenterX) / 3;
+        ballState.speedX = (ballCenterX - playerCenterX) / 3; // Horizontal kick direction
     }
 }
 
 function resetBall(scorer, ball) {
     ball.speedX = 0;
     ball.speedY = 0;
-    if (scorer === 'player1') {
+    if (scorer === 'player1') { // If player 1 scored, player 2 gets the ball
         ball.x = 141;
         ball.y = 40;
-    } else {
+    } else { // If player 2 scored, player 1 gets the ball
         ball.x = 141;
         ball.y = 445;
     }
@@ -358,4 +357,3 @@ function showLeaderboard() {
 }
 
 playAgainBtn.addEventListener('click', () => { window.location.reload(); });
-
